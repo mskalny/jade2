@@ -13,6 +13,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 public class BookBuyerAgent extends Agent {
   private BookBuyerGui myGui;
   private String targetBookTitle;
+  private int budget;
   
   //list of found sellers
   private AID[] sellerAgents;
@@ -34,7 +35,7 @@ public class BookBuyerAgent extends Agent {
 			  //search only if the purchase task was ordered
 			  if (!targetBookTitle.equals(""))
 			  {
-				  System.out.println(getAID().getLocalName() + ": I'm looking for " + targetBookTitle);
+				  System.out.println(getAID().getLocalName() + ": I'm looking for " + targetBookTitle + ". My budget is " + budget + ".");
 				  //update a list of known sellers (DF)
 				  DFAgentDescription template = new DFAgentDescription();
 				  ServiceDescription sd = new ServiceDescription();
@@ -63,14 +64,15 @@ public class BookBuyerAgent extends Agent {
   }
 
 	//invoked from GUI, when purchase was ordered
-	public void lookForTitle(final String title)
+	public void lookForTitle(final String title, int configuredBudget)
 	{
 		addBehaviour(new OneShotBehaviour()
 		{
 			public void action()
 			{
 				targetBookTitle = title;
-				System.out.println(getAID().getLocalName() + ": purchase order for " + targetBookTitle + " accepted");
+				budget = configuredBudget;
+				System.out.println(getAID().getLocalName() + ": purchase order for " + targetBookTitle + " accepted. Budget: " + budget);
 			}
 		});
 	}
@@ -110,7 +112,7 @@ public class BookBuyerAgent extends Agent {
 	        if (reply.getPerformative() == ACLMessage.PROPOSE) {
 	          //proposal received
 	          int price = Integer.parseInt(reply.getContent());
-	          if (bestSeller == null || price < bestPrice) {
+	          if ((bestSeller == null || price < bestPrice) && price <= budget) {
 	            //the best proposal as for now
 	            bestPrice = price;
 	            bestSeller = reply.getSender();
@@ -133,6 +135,7 @@ public class BookBuyerAgent extends Agent {
 	      order.setContent(targetBookTitle);
 	      order.setConversationId("book-trade");
 	      order.setReplyWith("order"+System.currentTimeMillis());
+		  budget -= bestPrice;
 	      myAgent.send(order);
 	      mt = MessageTemplate.and(MessageTemplate.MatchConversationId("book-trade"),
 	                               MessageTemplate.MatchInReplyTo(order.getReplyWith()));
@@ -145,7 +148,7 @@ public class BookBuyerAgent extends Agent {
 	        if (reply.getPerformative() == ACLMessage.INFORM) {
 	          //purchase succeeded
 	          System.out.println(getAID().getLocalName() + ": " + targetBookTitle + " purchased for " + bestPrice + " from " + reply.getSender().getLocalName());
-		  System.out.println(getAID().getLocalName() + ": waiting for the next purchase order.");
+		  System.out.println(getAID().getLocalName() + ": waiting for the next purchase order. Current budget is: " + budget);
 		  targetBookTitle = "";
 	          //myAgent.doDelete();
 	        }

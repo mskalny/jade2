@@ -9,7 +9,7 @@ import javax.swing.*;
 class BookBuyerGui extends JFrame {	
 	private BookBuyerAgent myAgent;
 	
-	private JTextField titleField;
+	private JTextField titleField, budgetField;
 	
 	BookBuyerGui(BookBuyerAgent a) {
 		super(a.getLocalName());
@@ -17,10 +17,16 @@ class BookBuyerGui extends JFrame {
 		myAgent = a;
 		
 		JPanel p = new JPanel();
-		p.setLayout(new GridLayout(2, 2));
+		p.setLayout(new GridLayout(2, 1));
+
 		p.add(new JLabel("Title:"));
 		titleField = new JTextField(15);
 		p.add(titleField);
+
+		p.add(new JLabel("Budget:"));
+		budgetField = new JTextField(15);
+		p.add(budgetField);
+
 		getContentPane().add(p, BorderLayout.CENTER);
 		
 		JButton addButton = new JButton("Search");
@@ -28,7 +34,8 @@ class BookBuyerGui extends JFrame {
 			public void actionPerformed(ActionEvent ev) {
 				try {
 					String title = titleField.getText().trim();
-					myAgent.lookForTitle(title);
+					int budget = Integer.parseInt(budgetField.getText().trim());
+					myAgent.lookForTitle(title, budget);
 					titleField.setText("");
 				}
 				catch (Exception e) {
